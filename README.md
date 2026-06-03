@@ -4,6 +4,13 @@ A browser-based WebGL experience of Fels Cave, built in Unity and deployed as a
 static site to GitHub Pages. The page shows a short intro, plays a video preview,
 then loads the Unity build, which runs entirely in the browser via WebAssembly.
 
+The live site is at <https://anucybernetics.github.io/fels-cave/>.
+
+## About
+
+This experience was built by an ANU TechLauncher student team. Direct all
+enquiries to <ash.lenton@anu.edu.au>.
+
 ## Deployment
 
 The site is static and deploys to GitHub Pages via `.github/workflows/deploy.yml`
