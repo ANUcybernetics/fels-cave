@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fels Cave</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      .screen {
+        position: fixed;
+        inset: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      /* Intro */
+      #intro {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 60;
+      }
+      .intro-card {
+        background: rgba(255, 255, 255, 0.98);
+        color: #071128;
+        border-radius: 18px;
+        padding: 36px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        text-align: center;
+        width: min(94%, 980px);
+      }
+      .intro-card h1 {
+        margin-top: 0;
+        font-size: 1.6rem;
+      }
+      .intro-copy {
+        margin-bottom: 18px;
+        font-size: 15px;
+        line-height: 1.6;
+        text-align: left;
+      }
+      .start-btn {
+        width: 140px;
+        height: 140px;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, #ff9a2b, #ff6a00);
+        color: #fff;
+        border: none;
+        font-weight: 900;
+        font-size: 26px;
+        cursor: pointer;
+        box-shadow: 0 14px 40px rgba(255, 105, 0, 0.22);
+      }
+      .start-btn:disabled {
+        opacity: 0.7;
+        cursor: default;
+      }
+
+      /* Video */
+      #video-screen {
+        background: #000;
+        z-index: 50;
+      }
+      #video-screen video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        display: block;
+        background: #000;
+      }
+
+      /* Unity */
+      #unity-screen {
+        z-index: 50;
+        background: #000;
+      }
+      #unity-screen iframe {
+        width: 100vw;
+        height: 100vh;
+        border: none;
+        display: block;
+        background: #000;
+      }
+
+      /* Shared controls */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.72);
+        color: #fff;
+        z-index: 70;
+        font-size: 18px;
+      }
+      .corner-btn {
+        position: fixed;
+        z-index: 90;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+      .enter-btn {
+        right: 16px;
+        bottom: 16px;
+        background: rgba(255, 106, 0, 0.95);
+      }
+      .back-btn {
+        left: 16px;
+        top: 16px;
+        background: rgba(0, 0, 0, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- INTRO -->
+    <div id="intro" class="screen">
+      <div class="intro-card">
+        <h1>Ready to enter Fels Cave?</h1>
+        <div class="intro-copy">
+          <p>
+            Fels Cave is a geologically rich cavern noted for layered mineral deposits
+            and faint prehistoric markings. For centuries it served as both shelter and
+            a ritual space for early occupants; today it provides important evidence for
+            local cultural practices and environmental change.
+          </p>
+          <p>This experience starts with a short video preview before the cave scene.</p>
+          <p style="margin-bottom: 0">Click <strong>Start</strong> to load the preview.</p>
+        </div>
+        <button id="start-btn" class="start-btn" aria-label="Start exploring Fels Cave">
+          Start
+        </button>
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div id="video-screen" class="screen" hidden>
+      <div id="video-loading" class="overlay">Loading video…</div>
+      <video
+        id="preview-video"
+        src="fels-cave-outside.mp4"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+      ></video>
+      <button id="enter-btn" class="corner-btn enter-btn">Enter the cave</button>
+    </div>
+
+    <!-- UNITY -->
+    <div id="unity-screen" class="screen" hidden>
+      <div id="unity-loading" class="overlay">Loading the cave…</div>
+      <iframe id="unity-frame" title="Fels Cave (Unity WebGL)" allowfullscreen></iframe>
+      <button id="back-btn" class="corner-btn back-btn">Back to video preview</button>
+    </div>
+
+    <script>
+      const screens = {
+        intro: document.getElementById("intro"),
+        video: document.getElementById("video-screen"),
+        unity: document.getElementById("unity-screen"),
+      };
+      const video = document.getElementById("preview-video");
+      const videoLoading = document.getElementById("video-loading");
+      const unityFrame = document.getElementById("unity-frame");
+      const unityLoading = document.getElementById("unity-loading");
+
+      function show(name) {
+        for (const [key, el] of Object.entries(screens)) {
+          el.hidden = key !== name;
+        }
+      }
+
+      // Hide the "Loading video…" overlay once the video can play. These may
+      // fire before this script runs (the video preloads), so the click handler
+      // below also checks readyState directly.
+      const hideVideoLoading = () => (videoLoading.hidden = true);
+      ["loadeddata", "canplay", "playing"].forEach((e) =>
+        video.addEventListener(e, hideVideoLoading)
+      );
+
+      // Intro -> Video
+      document.getElementById("start-btn").addEventListener("click", () => {
+        videoLoading.hidden = video.readyState >= 3; // already buffered? skip overlay
+        show("video");
+        video.play().catch(() => {
+          /* autoplay may be blocked; controls/loop still apply */
+        });
+      });
+
+      // Video -> Unity (load the iframe lazily on first entry)
+      document.getElementById("enter-btn").addEventListener("click", () => {
+        unityLoading.hidden = false;
+        if (!unityFrame.src) {
+          unityFrame.src = "web_build/index.html";
+        }
+        show("unity");
+      });
+
+      unityFrame.addEventListener("load", () => (unityLoading.hidden = true));
+
+      // Unity -> Video
+      document.getElementById("back-btn").addEventListener("click", () => {
+        show("video");
+        try {
+          video.currentTime = 0;
+          video.play();
+        } catch (_) {
+          /* ignore */
+        }
+      });
+    </script>
+  </body>
+</html>
